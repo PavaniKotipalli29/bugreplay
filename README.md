@@ -13,29 +13,29 @@ It allows teams to report, manage, assign, and resolve bugs efficiently with rol
 - JWT Authentication & Protected Routes
 - Role-Based Access Control (Admin controls vs User permissions)
 
-## Project Workspaces [NEW]
+## Project Workspaces
 - Compartmentalize bugs under distinct Project scopes
 - Create and organize project workspaces dynamically
 
-## Advanced Bug Tracking & Filtering [NEW]
+## Advanced Bug Tracking & Filtering 
 - Create, edit, and delete bug reports
 - Advanced Dashboard filters for Project, Status, Severity, and Tags
 - Custom sorting filters (Newest, Priority, Severity)
 - Live hashtag preview chips for categories
 
-## Collaboration & Markdown Engine [NEW]
+## Collaboration & Markdown Engine
 - Interactive comment system
 - Light/Dark themed markdown parsing for bug descriptions and comment blocks
 - Fenced code blocks with single-click copy-to-clipboard action
 - Activity log timelines and reproduction step tracking
 - Multer screenshot file uploads
 
-## Real-time Alert Notifications [NEW]
+## Real-time Alert Notifications 
 - Responsive Navbar notification bell drawer
 - Automated unread counts and alerts when assigned a bug, or when comments/status change on your bugs
 - Bulk clear actions to mark notifications as read
 
-## SVG & CSS Interactive Analytics [NEW]
+## SVG & CSS Interactive Analytics 
 - Animated SVG circular progress completing percentages indicator
 - Color-graded CSS progress bars tracking status breakdown (Open, In Progress, Resolved)
 - CSS progress bars tracking severity distributions (High, Medium, Low)
