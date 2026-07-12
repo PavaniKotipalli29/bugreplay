@@ -21,6 +21,7 @@ import PublicBug from "./pages/PublicBug";
 import EditBug from "./pages/EditBug";
 import MyDashboard from "./pages/MyDashboard";
 import Analytics from "./pages/Analytics";
+import Projects from "./pages/Projects";
 
 import ProtectedRoute
   from "./components/ProtectedRoute";
@@ -49,30 +50,7 @@ export default function App() {
 
     <BrowserRouter>
 
-      <Navbar />
-
-      <div className="theme-toggle-wrap">
-
-        <button
-          className="theme-toggle-btn"
-          onClick={() =>
-            setTheme(
-              theme === "light"
-                ? "dark"
-                : "light"
-            )
-          }
-        >
-
-          {
-            theme === "light"
-              ? "🌙 Dark Mode"
-              : "☀️ Light Mode"
-          }
-
-        </button>
-
-      </div>
+      <Navbar theme={theme} setTheme={setTheme} />
 
       <div className="container">
 
@@ -153,6 +131,16 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* PROJECTS */}
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <Projects />
               </ProtectedRoute>
             }
           />

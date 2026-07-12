@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import api from "../api/axios";
-import { showToast } from "../utils/toast";
 
 export default function EditBug() {
   const { id } = useParams();
-
   const nav = useNavigate();
 
   const [data, setData] = useState({
@@ -15,59 +12,67 @@ export default function EditBug() {
     status: "Open",
     severity: "Low",
     expected_result: "",
-    actual_result: ""
+    actual_result: "",
+    project_id: "",
+    tags: ""
   });
 
+  const [projects, setProjects] = useState([]);
+
   useEffect(() => {
+    fetchProjects();
     fetchBug();
   }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const res = await api.get("/projects");
+      setProjects(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchBug = async () => {
     try {
       const res = await api.get(`/bugs/${id}`);
-
+      const b = res.data.bug;
       setData({
-        title:
-          res.data.bug.title || "",
-
-        description:
-          res.data.bug.description || "",
-
-        status:
-          res.data.bug.status || "Open",
-
-        severity:
-          res.data.bug.severity || "Low",
-
-        expected_result:
-          res.data.bug.expected_result || "",
-
-        actual_result:
-          res.data.bug.actual_result || ""
+        title: b.title || "",
+        description: b.description || "",
+        status: b.status || "Open",
+        severity: b.severity || "Low",
+        expected_result: b.expected_result || "",
+        actual_result: b.actual_result || "",
+        project_id: b.project_id || "",
+        tags: b.tags || ""
       });
-
     } catch (err) {
-      console.log(err);
-      showToast("Failed to load bug", "error");
+      console.error(err);
+      alert("Failed to load bug details");
     }
   };
 
   const updateBug = async () => {
     try {
-      await api.put(`/bugs/${id}`, data);
-
-      showToast("Bug updated");
-
+      await api.put(`/bugs/${id}`, {
+        ...data,
+        project_id: data.project_id || null
+      });
+      alert("Bug updated successfully");
       nav(`/bug/${id}`);
-
     } catch (err) {
-      console.log(err);
-      showToast("Update failed", "error");
+      console.error(err);
+      alert("Update failed - Unauthorized or Server Error");
     }
   };
 
+  const activeTags = data.tags
+    ? data.tags.split(",").map(t => t.trim()).filter(Boolean)
+    : [];
+
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: "600px" }}>
       <h2>Edit Bug</h2>
 
       <input
@@ -80,6 +85,24 @@ export default function EditBug() {
           })
         }
       />
+
+      <select
+        value={data.project_id}
+        onChange={(e) =>
+          setData({
+            ...data,
+            project_id: e.target.value
+          })
+        }
+        style={{ marginBottom: "14px" }}
+      >
+        <option value="">Select Project (Optional)</option>
+        {projects.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
 
       <textarea
         placeholder="Description"
@@ -142,6 +165,29 @@ export default function EditBug() {
         <option>High</option>
       </select>
 
+      <div style={{ marginBottom: "14px" }}>
+        <input
+          placeholder="Tags (comma-separated, e.g. ui, backend)"
+          value={data.tags}
+          onChange={(e) =>
+            setData({
+              ...data,
+              tags: e.target.value
+            })
+          }
+          style={{ marginBottom: "6px" }}
+        />
+        {activeTags.length > 0 && (
+          <div className="badges" style={{ margin: "4px 0" }}>
+            {activeTags.map((t, idx) => (
+              <span key={idx} className="badge severity-low">
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div
         style={{
           display: "flex",
@@ -152,6 +198,7 @@ export default function EditBug() {
         <button
           className="btn-primary"
           onClick={updateBug}
+          style={{ flex: 1 }}
         >
           Save Changes
         </button>
@@ -159,6 +206,7 @@ export default function EditBug() {
         <button
           className="btn-secondary"
           onClick={() => nav(-1)}
+          style={{ flex: 1 }}
         >
           Cancel
         </button>

@@ -78,7 +78,14 @@ export default function BugCard({
   return (
     <div className="bug-card">
 
-      <h3>{bug.title}</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <h3>{bug.title}</h3>
+        {bug.project_name && (
+          <span style={{ fontSize: "12px", background: "rgba(99,102,241,0.15)", color: "var(--primary)", padding: "4px 10px", borderRadius: "8px", fontWeight: "600" }}>
+            📂 {bug.project_name}
+          </span>
+        )}
+      </div>
 
       <p className="bug-description">
         {bug.description}
@@ -105,6 +112,12 @@ export default function BugCard({
         <span className={getSeverityClass()}>
           {bug.severity}
         </span>
+
+        {bug.tags && bug.tags.split(",").map(t => t.trim()).filter(Boolean).map((t, idx) => (
+          <span key={idx} className="badge" style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}>
+            #{t}
+          </span>
+        ))}
 
       </div>
 

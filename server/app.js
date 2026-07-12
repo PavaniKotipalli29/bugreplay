@@ -31,6 +31,10 @@ app.use("/api/upload", require("./routes/uploadRoutes"));
 // ✅ NEW ACTIVITY ROUTE
 app.use("/api/activity", require("./routes/activityRoutes"));
 
+// ✅ NEW PROJECTS AND NOTIFICATIONS ROUTES
+app.use("/api/projects", require("./routes/projectRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
+
 /* ===============================
    ✅ ERROR HANDLER
 ================================= */

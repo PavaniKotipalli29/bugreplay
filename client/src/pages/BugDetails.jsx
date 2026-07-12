@@ -14,6 +14,7 @@ import StepList from "../components/StepList";
 import CommentSection from "../components/CommentSection";
 import FileUploader from "../components/FileUploader";
 import ActivityTimeline from "../components/ActivityTimeline";
+import Markdown from "../components/Markdown";
 
 export default function BugDetails() {
 
@@ -243,6 +244,15 @@ export default function BugDetails() {
 
       <div className="bug-card">
 
+        {bug.project_name && (
+          <p>
+            <strong>
+              Project Workspace:
+            </strong>{" "}
+            <span style={{ fontWeight: 600, color: "var(--primary)" }}>📂 {bug.project_name}</span>
+          </p>
+        )}
+
         <p>
           <strong>
             Created By:
@@ -261,12 +271,10 @@ export default function BugDetails() {
           }
         </p>
 
-        <p>
-          <strong>
-            Description:
-          </strong>{" "}
-          {bug.description}
-        </p>
+        <div style={{ marginTop: "14px", marginBottom: "14px" }}>
+          <strong>Description:</strong>
+          <Markdown content={bug.description} />
+        </div>
 
         {/* BADGES */}
 
@@ -310,6 +318,19 @@ export default function BugDetails() {
 
         </div>
 
+        {bug.tags && (
+          <div style={{ marginTop: "12px" }}>
+            <strong>Tags:</strong>
+            <div className="badges" style={{ display: "inline-flex", marginLeft: "10px", margin: 0 }}>
+              {bug.tags.split(",").map(t => t.trim()).filter(Boolean).map((t, idx) => (
+                <span key={idx} className="badge severity-low" style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}>
+                  #{t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
 
       <hr />
@@ -318,25 +339,17 @@ export default function BugDetails() {
         Expected Result
       </h3>
 
-      <p>
-        {
-          bug.expected_result
-          ||
-          "Not provided"
-        }
-      </p>
+      <div style={{ background: "rgba(0,0,0,0.05)", padding: "10px 14px", borderRadius: "12px", border: "1px solid rgba(148,163,184,0.1)" }}>
+        <Markdown content={bug.expected_result || "Not provided"} />
+      </div>
 
       <h3>
         Actual Result
       </h3>
 
-      <p>
-        {
-          bug.actual_result
-          ||
-          "Not provided"
-        }
-      </p>
+      <div style={{ background: "rgba(0,0,0,0.05)", padding: "10px 14px", borderRadius: "12px", border: "1px solid rgba(148,163,184,0.1)" }}>
+        <Markdown content={bug.actual_result || "Not provided"} />
+      </div>
 
       <hr />
 

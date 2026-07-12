@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import Markdown from "./Markdown";
 
 export default function CommentSection({ bugId }) {
   const [comments, setComments] = useState([]);
@@ -71,7 +72,9 @@ export default function CommentSection({ bugId }) {
               </span>
             </div>
 
-            <p className="comment-text">{c.comment}</p>
+            <div className="comment-text">
+              <Markdown content={c.comment} />
+            </div>
           </div>
         ))
       )}

@@ -1,5 +1,6 @@
 const db = require("../models/db");
 const logActivity = require("../utils/logActivity");
+const createNotification = require("../utils/createNotification");
 
 /*
 ========================================
@@ -11,7 +12,8 @@ const bugSelectQuery = `
 SELECT
   bugs.*,
   users.name AS creator_name,
-  assigned_user.name AS assigned_to_name
+  assigned_user.name AS assigned_to_name,
+  projects.name AS project_name
 
 FROM bugs
 
@@ -20,6 +22,9 @@ ON bugs.user_id = users.id
 
 LEFT JOIN users AS assigned_user
 ON bugs.assigned_to = assigned_user.id
+
+LEFT JOIN projects
+ON bugs.project_id = projects.id
 `;
 
 /*
@@ -35,7 +40,9 @@ exports.createBug = (req, res) => {
     description,
     expected_result,
     actual_result,
-    severity
+    severity,
+    project_id,
+    tags
   } = req.body;
 
   db.query(
@@ -47,9 +54,11 @@ exports.createBug = (req, res) => {
       description,
       expected_result,
       actual_result,
-      severity
+      severity,
+      project_id,
+      tags
     )
-    VALUES (?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?)
     `,
     [
       req.user.id,
@@ -57,7 +66,9 @@ exports.createBug = (req, res) => {
       description,
       expected_result || null,
       actual_result || null,
-      severity || "Low"
+      severity || "Low",
+      project_id ? parseInt(project_id) : null,
+      tags || ""
     ],
     (err, result) => {
 
@@ -92,7 +103,10 @@ exports.getBugs = (req, res) => {
   const {
     search,
     status,
-    severity
+    severity,
+    project_id,
+    tag,
+    sortBy
   } = req.query;
 
   const page =
@@ -128,6 +142,43 @@ exports.getBugs = (req, res) => {
     values.push(severity);
   }
 
+  if (project_id) {
+    whereQuery +=
+      " AND bugs.project_id=?";
+
+    values.push(parseInt(project_id));
+  }
+
+  if (tag) {
+    whereQuery +=
+      " AND bugs.tags LIKE ?";
+
+    values.push(`%${tag}%`);
+  }
+
+  // Sort Query
+  let sortSql = "ORDER BY bugs.updated_at DESC";
+  if (sortBy === "newest") {
+    sortSql = "ORDER BY bugs.created_at DESC";
+  } else if (sortBy === "priority") {
+    sortSql = `ORDER BY 
+      CASE bugs.priority 
+        WHEN 'Critical' THEN 1 
+        WHEN 'High' THEN 2 
+        WHEN 'Medium' THEN 3 
+        WHEN 'Low' THEN 4 
+        ELSE 5 
+      END ASC, bugs.updated_at DESC`;
+  } else if (sortBy === "severity") {
+    sortSql = `ORDER BY 
+      CASE bugs.severity 
+        WHEN 'High' THEN 1 
+        WHEN 'Medium' THEN 2 
+        WHEN 'Low' THEN 3 
+        ELSE 4 
+      END ASC, bugs.updated_at DESC`;
+  }
+
   const countQuery = `
     SELECT COUNT(*) AS total
     FROM bugs
@@ -152,7 +203,7 @@ exports.getBugs = (req, res) => {
 
         ${whereQuery}
 
-        ORDER BY bugs.updated_at DESC
+        ${sortSql}
 
         LIMIT ? OFFSET ?
       `;
@@ -279,7 +330,9 @@ exports.updateBug = (req, res) => {
     expected_result,
     actual_result,
     status,
-    severity
+    severity,
+    project_id,
+    tags
   } = req.body;
 
   db.query(
@@ -326,7 +379,9 @@ exports.updateBug = (req, res) => {
           expected_result=?,
           actual_result=?,
           status=?,
-          severity=?
+          severity=?,
+          project_id=?,
+          tags=?
         WHERE id=?
         `,
         [
@@ -336,6 +391,8 @@ exports.updateBug = (req, res) => {
           actual_result,
           status,
           severity,
+          project_id ? parseInt(project_id) : null,
+          tags || "",
           req.params.id
         ],
 
@@ -459,36 +516,53 @@ exports.assignBug = (req, res) => {
     });
   }
 
-  db.query(
-    `
-    UPDATE bugs
-    SET assigned_to=?
-    WHERE id=?
-    `,
-    [
-      assigned_to || null,
-      bugId
-    ],
-
-    (err) => {
-
-      if (err) {
-        console.log(err);
-        return res.status(500).json(err);
-      }
-
-      logActivity(
-        bugId,
-        req.user.id,
-        `Assigned bug to user ID ${assigned_to}`
-      );
-
-      res.json({
-        msg: "Bug assigned successfully"
-      });
-
+  // Get bug title before assigning
+  db.query("SELECT title FROM bugs WHERE id = ?", [bugId], (err, bugRes) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
     }
-  );
+    const bugTitle = bugRes.length > 0 ? bugRes[0].title : "Unknown Bug";
+
+    db.query(
+      `
+      UPDATE bugs
+      SET assigned_to=?
+      WHERE id=?
+      `,
+      [
+        assigned_to || null,
+        bugId
+      ],
+
+      (err2) => {
+
+        if (err2) {
+          console.log(err2);
+          return res.status(500).json(err2);
+        }
+
+        logActivity(
+          bugId,
+          req.user.id,
+          `Assigned bug to user ID ${assigned_to}`
+        );
+
+        if (assigned_to) {
+          createNotification(
+            parseInt(assigned_to),
+            "assignment",
+            `You have been assigned to bug: "${bugTitle}" by Admin`
+          );
+        }
+
+        res.json({
+          msg: "Bug assigned successfully"
+        });
+
+      }
+    );
+  });
 
 };
 
@@ -504,36 +578,55 @@ exports.updateBugStatus = (req, res) => {
 
   const { status } = req.body;
 
-  db.query(
-    `
-    UPDATE bugs
-    SET status=?
-    WHERE id=?
-    `,
-    [
-      status,
-      bugId
-    ],
-
-    (err) => {
-
-      if (err) {
-        console.log(err);
-        return res.status(500).json(err);
-      }
-
-      logActivity(
-        bugId,
-        req.user.id,
-        `Status changed to ${status}`
-      );
-
-      res.json({
-        msg: "Status updated"
-      });
-
+  db.query("SELECT title, user_id, assigned_to FROM bugs WHERE id = ?", [bugId], (err, bugRes) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
     }
-  );
+    if (bugRes.length === 0) {
+      return res.status(404).json({ msg: "Bug not found" });
+    }
+    const bug = bugRes[0];
+
+    db.query(
+      `
+      UPDATE bugs
+      SET status=?
+      WHERE id=?
+      `,
+      [
+        status,
+        bugId
+      ],
+
+      (err2) => {
+
+        if (err2) {
+          console.log(err2);
+          return res.status(500).json(err2);
+        }
+
+        logActivity(
+          bugId,
+          req.user.id,
+          `Status changed to ${status}`
+        );
+
+        const msg = `Bug "${bug.title}" status was updated to "${status}" by ${req.user.name || 'User'}`;
+        if (bug.user_id !== req.user.id) {
+          createNotification(bug.user_id, "status", msg);
+        }
+        if (bug.assigned_to && bug.assigned_to !== req.user.id && bug.assigned_to !== bug.user_id) {
+          createNotification(bug.assigned_to, "status", msg);
+        }
+
+        res.json({
+          msg: "Status updated"
+        });
+
+      }
+    );
+  });
 
 };
 
@@ -549,36 +642,55 @@ exports.updateBugPriority = (req, res) => {
 
   const { priority } = req.body;
 
-  db.query(
-    `
-    UPDATE bugs
-    SET priority=?
-    WHERE id=?
-    `,
-    [
-      priority,
-      bugId
-    ],
-
-    (err) => {
-
-      if (err) {
-        console.log(err);
-        return res.status(500).json(err);
-      }
-
-      logActivity(
-        bugId,
-        req.user.id,
-        `Priority changed to ${priority}`
-      );
-
-      res.json({
-        msg: "Priority updated"
-      });
-
+  db.query("SELECT title, user_id, assigned_to FROM bugs WHERE id = ?", [bugId], (err, bugRes) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
     }
-  );
+    if (bugRes.length === 0) {
+      return res.status(404).json({ msg: "Bug not found" });
+    }
+    const bug = bugRes[0];
+
+    db.query(
+      `
+      UPDATE bugs
+      SET priority=?
+      WHERE id=?
+      `,
+      [
+        priority,
+        bugId
+      ],
+
+      (err2) => {
+
+        if (err2) {
+          console.log(err2);
+          return res.status(500).json(err2);
+        }
+
+        logActivity(
+          bugId,
+          req.user.id,
+          `Priority changed to ${priority}`
+        );
+
+        const msg = `Bug "${bug.title}" priority was updated to "${priority}" by ${req.user.name || 'User'}`;
+        if (bug.user_id !== req.user.id) {
+          createNotification(bug.user_id, "priority", msg);
+        }
+        if (bug.assigned_to && bug.assigned_to !== req.user.id && bug.assigned_to !== bug.user_id) {
+          createNotification(bug.assigned_to, "priority", msg);
+        }
+
+        res.json({
+          msg: "Priority updated"
+        });
+
+      }
+    );
+  });
 
 };
 

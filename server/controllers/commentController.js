@@ -1,4 +1,5 @@
 const db = require("../models/db");
+const createNotification = require("../utils/createNotification");
 
 // ADD COMMENT
 exports.addComment = (req, res) => {
@@ -15,6 +16,21 @@ exports.addComment = (req, res) => {
     [bug_id, user_id, comment],
     (err) => {
       if (err) return res.status(500).json(err);
+
+      // Fetch bug info for notification
+      db.query("SELECT title, user_id, assigned_to FROM bugs WHERE id = ?", [bug_id], (err2, bugRes) => {
+        if (!err2 && bugRes.length > 0) {
+          const bug = bugRes[0];
+          const msg = `New comment on bug "${bug.title}" by ${req.user.name || 'User'}`;
+          
+          if (bug.user_id !== req.user.id) {
+            createNotification(bug.user_id, "comment", msg);
+          }
+          if (bug.assigned_to && bug.assigned_to !== req.user.id && bug.assigned_to !== bug.user_id) {
+            createNotification(bug.assigned_to, "comment", msg);
+          }
+        }
+      });
 
       res.json({ msg: "Comment added" });
     }
