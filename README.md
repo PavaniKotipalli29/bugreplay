@@ -8,46 +8,42 @@ It allows teams to report, manage, assign, and resolve bugs efficiently with rol
 
 # 🚀 Features
 
-## Authentication
-- User Registration
-- User Login
-- JWT Authentication
-- Protected Routes
-- Role-Based Access
+## Authentication & Authorization
+- User Registration & Login
+- JWT Authentication & Protected Routes
+- Role-Based Access Control (Admin controls vs User permissions)
 
-## Bug Management
-- Create Bug Reports
-- Edit Bugs
-- Delete Bugs
-- Assign Bugs to Users
-- Update Bug Status
-- Update Bug Priority
-- Bug Filtering
+## Project Workspaces [NEW]
+- Compartmentalize bugs under distinct Project scopes
+- Create and organize project workspaces dynamically
 
-## Collaboration
-- Comment System
-- Activity Timeline
-- Step Reproduction Tracking
-- Screenshot Uploads
+## Advanced Bug Tracking & Filtering [NEW]
+- Create, edit, and delete bug reports
+- Advanced Dashboard filters for Project, Status, Severity, and Tags
+- Custom sorting filters (Newest, Priority, Severity)
+- Live hashtag preview chips for categories
 
-## Dashboard
-- My Workspace
-- Assigned Bugs
-- Reported Bugs
-- Recently Updated Bugs
+## Collaboration & Markdown Engine [NEW]
+- Interactive comment system
+- Light/Dark themed markdown parsing for bug descriptions and comment blocks
+- Fenced code blocks with single-click copy-to-clipboard action
+- Activity log timelines and reproduction step tracking
+- Multer screenshot file uploads
 
-## Analytics
-- Total Bugs
-- Open Bugs
-- In Progress Bugs
-- Resolved Bugs
-- Severity Statistics
+## Real-time Alert Notifications [NEW]
+- Responsive Navbar notification bell drawer
+- Automated unread counts and alerts when assigned a bug, or when comments/status change on your bugs
+- Bulk clear actions to mark notifications as read
+
+## SVG & CSS Interactive Analytics [NEW]
+- Animated SVG circular progress completing percentages indicator
+- Color-graded CSS progress bars tracking status breakdown (Open, In Progress, Resolved)
+- CSS progress bars tracking severity distributions (High, Medium, Low)
 
 ## UI Features
-- Dark/Light Theme
-- Responsive Design
-- Modern Glassmorphism UI
-- Public Shareable Bug Links
+- Seamless Navbar theme toggle switcher (Dark/Light Mode)
+- Responsive glassmorphism cards and inputs
+- Public shareable bug preview links
 
 ---
 
